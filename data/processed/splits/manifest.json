@@ -1,0 +1,46 @@
+[
+  {
+    "sell_id": 1070,
+    "train_path": "/Users/souravkumar/pricing/data/processed/splits/1070_train.parquet",
+    "val_path": "/Users/souravkumar/pricing/data/processed/splits/1070_val.parquet",
+    "train_rows": 1080,
+    "val_rows": 271,
+    "train_date_min": "2012-01-01 00:00:00",
+    "train_date_max": "2014-12-13 00:00:00",
+    "val_date_min": "2014-12-14 00:00:00",
+    "val_date_max": "2015-09-10 00:00:00"
+  },
+  {
+    "sell_id": 2051,
+    "train_path": "/Users/souravkumar/pricing/data/processed/splits/2051_train.parquet",
+    "val_path": "/Users/souravkumar/pricing/data/processed/splits/2051_val.parquet",
+    "train_rows": 1080,
+    "val_rows": 271,
+    "train_date_min": "2012-01-01 00:00:00",
+    "train_date_max": "2014-12-13 00:00:00",
+    "val_date_min": "2014-12-14 00:00:00",
+    "val_date_max": "2015-09-10 00:00:00"
+  },
+  {
+    "sell_id": 2052,
+    "train_path": "/Users/souravkumar/pricing/data/processed/splits/2052_train.parquet",
+    "val_path": "/Users/souravkumar/pricing/data/processed/splits/2052_val.parquet",
+    "train_rows": 1080,
+    "val_rows": 271,
+    "train_date_min": "2012-01-01 00:00:00",
+    "train_date_max": "2014-12-13 00:00:00",
+    "val_date_min": "2014-12-14 00:00:00",
+    "val_date_max": "2015-09-10 00:00:00"
+  },
+  {
+    "sell_id": 2053,
+    "train_path": "/Users/souravkumar/pricing/data/processed/splits/2053_train.parquet",
+    "val_path": "/Users/souravkumar/pricing/data/processed/splits/2053_val.parquet",
+    "train_rows": 1080,
+    "val_rows": 271,
+    "train_date_min": "2012-01-01 00:00:00",
+    "train_date_max": "2014-12-13 00:00:00",
+    "val_date_min": "2014-12-14 00:00:00",
+    "val_date_max": "2015-09-10 00:00:00"
+  }
+]

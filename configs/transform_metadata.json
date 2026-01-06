@@ -1,0 +1,77 @@
+{
+  "rows_input": 5404,
+  "rows_after_filter": 5404,
+  "dropped_rows_nonpositive": 0,
+  "rare_holiday_min_count": 20,
+  "dropped_columns": [
+    "PRICE",
+    "QUANTITY",
+    "CALENDAR_DATE",
+    "ITEM_NAME",
+    "ITEM_ID",
+    "SELL_ID",
+    "revenue",
+    "YEAR",
+    "IS_WEEKEND",
+    "SELL_CATEGORY_x",
+    "SELL_CATEGORY_y",
+    "HOLIDAY_Not Holiday"
+  ],
+  "vif_drops": [
+    {
+      "column": "AVERAGE_TEMPERATURE",
+      "vif": 264.4104726561054,
+      "threshold": 10.0
+    },
+    {
+      "column": "TEMP_X_OUTDOOR",
+      "vif": 100.78614957261816,
+      "threshold": 10.0
+    },
+    {
+      "column": "IS_OUTDOOR",
+      "vif": 13.327095423746579,
+      "threshold": 10.0
+    }
+  ],
+  "final_features": [
+    "IS_SCHOOLBREAK",
+    "log_p",
+    "IS_MONTH_END",
+    "HOLIDAY_Labor Day",
+    "HOLIDAY_Luner New Year",
+    "HOLIDAY_Mid-Autumn Day",
+    "HOLIDAY_National Day",
+    "HOLIDAY_New Year",
+    "HOLIDAY_OtherHoliday",
+    "HOLIDAY_Qing Ming Festival",
+    "MONTH_2",
+    "MONTH_3",
+    "MONTH_4",
+    "MONTH_5",
+    "MONTH_6",
+    "MONTH_7",
+    "MONTH_8",
+    "MONTH_9",
+    "MONTH_10",
+    "MONTH_11",
+    "MONTH_12",
+    "DAYOFWEEK_1",
+    "DAYOFWEEK_2",
+    "DAYOFWEEK_3",
+    "DAYOFWEEK_4",
+    "DAYOFWEEK_5",
+    "DAYOFWEEK_6"
+  ],
+  "scaled_features": [
+    "log_p"
+  ],
+  "thresholds": [
+    10.0,
+    5.0
+  ],
+  "features_path": "/Users/souravkumar/pricing/data/processed/features.parquet",
+  "features_with_meta_path": "/Users/souravkumar/pricing/data/processed/features_with_ids.parquet",
+  "scaler_path": "/Users/souravkumar/pricing/configs/scaler.pkl",
+  "note": null
+}

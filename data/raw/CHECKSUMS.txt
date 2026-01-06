@@ -1,0 +1,4 @@
+a0b1abf340fb3a2e912a96eb58d5d88c847559501f90ae3cfdfce97e80ee92ac  data/raw/Cafe+-+DateInfo.csv
+607da1724fcdf997bb2e3ee1ef0f4c1d86f89ef7f02c7b589396bede2a978776  data/raw/Cafe+-+Sell+Meta+Data.csv
+a6fd642ab6babbae5b6ff4fbcc203d9af8c06d6d051e2294f1a26dac0909f9cd  data/raw/Cafe+-+Transaction+-+Store.csv
+a608b8513343e063a3d7440d863f94a73f99084b3c24205cafb8d02792653cc9  data/raw/avocado.csv
