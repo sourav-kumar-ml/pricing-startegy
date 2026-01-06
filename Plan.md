@@ -54,6 +54,37 @@
   - [x] Sprint close-out: update `Plan.md` and write sprint summary in `docs/sprints/`.
 - Definition of Done: reproducible splits, runnable model scripts, passing tests, `Plan.md` updated, sprint summary written.
 
+### Sprint 4 – Elasticity Deep Dive & Price Point Analysis
+- Goal: stay aligned with log–log regression framing while producing decision-ready elasticity and revenue-maximizing price recommendations.
+- Deliverables: elasticity tables per SKU, price-response curves, and candidate revenue-maximizing price points under observed ranges.
+- Tasks:
+  - [x] Extend baseline model scripts to compute/emit own-price elasticity from the log–log coefficients and confidence intervals.
+  - [x] Generate price-response and revenue curves per SKU (using observed price range and model coefficients) and save plots/tables to `reports/`.
+  - [x] Add robustness checks: re-fit log–log OLS/Ridge with/without select covariates (e.g., weather) to gauge elasticity stability.
+  - [x] Document assumptions/limitations of the log–log approach (e.g., local elasticity, extrapolation bounds) in `docs/`.
+  - [x] Tests: unit tests for elasticity extraction and revenue curve generation.
+- Definition of Done: elasticity metrics and price-point recommendations saved to `reports/`, code/tests updated, summary in `docs/sprints/`.
+
+### Sprint 5 – Validation, Reporting & What-Ifs
+- Goal: validate model quality, quantify uncertainty, and package outputs for stakeholders.
+- Deliverables: validation metrics beyond RMSE (e.g., R², MAPE), residual diagnostics, and a concise report on demand drivers and price sensitivity.
+- Tasks:
+  - [ ] Add evaluation module to compute R², MAPE, and residual plots per SKU; export to `reports/`.
+  - [ ] Perform time-based cross-validation or rolling-origin validation for the log–log models to assess temporal stability.
+  - [ ] Summarize key drivers and elasticity interpretations in a narrative report (`docs/`), keeping the model form consistent with the original description.
+  - [ ] Tests: add checks for metric calculations and that evaluation uses only train/val folds chronologically.
+- Definition of Done: validation artifacts produced, report written, tests passing, sprint summary captured.
+
+### Sprint 6 – Packaging & Handover (Optional)
+- Goal: make the pipeline easy to rerun and hand off while preserving the log–log modeling approach.
+- Deliverables: CLI/script entry points, refreshed documentation, and optional lightweight CI hooks.
+- Tasks:
+  - [ ] Add simple CLI wrappers (e.g., `scripts/` or `python -m ...`) to run EDA, transforms, splits, and baseline models in sequence.
+  - [ ] Provide usage docs for rerunning the full pipeline and updating recommendations.
+  - [ ] (Optional) Wire pytest into a minimal CI workflow; ensure artifacts are documented/versioned.
+  - [ ] Tests: ensure CLI wrappers execute without errors in dry-run mode.
+- Definition of Done: runnable end-to-end commands documented, optional CI stubbed, and handover notes prepared.
+
 ## Risks and Mitigations
 - Multicollinearity: address via iterative VIF pruning and removal of redundant raw/log/year features.
 - Sparse categories (rare holidays): mitigate by collapsing to “OtherHoliday” to stabilize dummies.
