@@ -49,9 +49,9 @@
 - Deliverables: time-aware splits, baseline OLS/regularized scripts per SKU, tests for transformations.
 - Tasks:
   - [x] Time-based splits per SKU (e.g., 80/20 by date) saved under `data/processed/` with manifest.
-  - [ ] Baseline model scripts (`src/models/`): OLS + optional Ridge/Lasso/Elastic Net; ensure each `SELL_ID` is modeled separately.
+  - [x] Baseline model scripts (`src/models/`): OLS + optional Ridge/Lasso/Elastic Net; ensure each `SELL_ID` is modeled separately.
   - [x] Testing: unit tests for ingestion/transforms/scalers; sanity checks on feature columns and non-leakage; wire into `tests/`.
-  - [ ] Sprint close-out: update `Plan.md` and write sprint summary in `docs/sprints/`.
+  - [x] Sprint close-out: update `Plan.md` and write sprint summary in `docs/sprints/`.
 - Definition of Done: reproducible splits, runnable model scripts, passing tests, `Plan.md` updated, sprint summary written.
 
 ## Risks and Mitigations
