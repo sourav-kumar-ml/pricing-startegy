@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from joblib import load
 import statsmodels.api as sm
 
 from src.utils.io import read_date_info
@@ -29,6 +30,18 @@ class ElasticityResult:
     ci_high: float | None
 
 
+@dataclass(frozen=True)
+class LogPScaling:
+    mean: float
+    scale: float
+
+    def unscale_log_p(self, scaled_log_p: np.ndarray) -> np.ndarray:
+        return scaled_log_p * self.scale + self.mean
+
+    def scale_log_p(self, log_p: np.ndarray) -> np.ndarray:
+        return (log_p - self.mean) / self.scale
+
+
 def load_metadata(path: Path | None = None) -> dict:
     path = path or (CONFIGS_DIR / "transform_metadata.json")
     return json.loads(Path(path).read_text())
@@ -44,6 +57,31 @@ def load_features_with_ids(metadata: dict) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing columns in features file: {missing}")
     return df
+
+
+def load_log_p_scaling(metadata: dict) -> LogPScaling | None:
+    scaled_features = list(metadata.get("scaled_features") or [])
+    if PRICE_LOG_COL not in scaled_features:
+        return None
+    scaler_path = metadata.get("scaler_path")
+    if not scaler_path:
+        raise ValueError(
+            f"{PRICE_LOG_COL} is listed in scaled_features but scaler_path is missing; rerun `python -m src.processing.pipeline`."
+        )
+    scaler = load(scaler_path)
+
+    idx = None
+    feature_names_in = getattr(scaler, "feature_names_in_", None)
+    if feature_names_in is not None and PRICE_LOG_COL in feature_names_in:
+        idx = list(feature_names_in).index(PRICE_LOG_COL)
+    else:
+        idx = scaled_features.index(PRICE_LOG_COL)
+
+    mean = float(scaler.mean_[idx])
+    scale = float(scaler.scale_[idx])
+    if scale == 0:
+        raise ValueError(f"Invalid scaler: scale for {PRICE_LOG_COL} is 0.")
+    return LogPScaling(mean=mean, scale=scale)
 
 
 def attach_weather(df: pd.DataFrame) -> pd.DataFrame:
@@ -84,7 +122,11 @@ def fit_ols(df: pd.DataFrame, features: List[str]) -> Tuple[sm.regression.linear
 
 
 def elasticity_from_results(
-    sell_id: int, model_name: str, results: sm.regression.linear_model.RegressionResultsWrapper, feature_names: List[str]
+    sell_id: int,
+    model_name: str,
+    results: sm.regression.linear_model.RegressionResultsWrapper,
+    feature_names: List[str],
+    log_p_scaling: LogPScaling | None = None,
 ) -> ElasticityResult:
     if PRICE_LOG_COL not in feature_names:
         raise ValueError(f"{PRICE_LOG_COL} missing from model features")
@@ -95,6 +137,11 @@ def elasticity_from_results(
         ci_low, ci_high = float(ci[0]), float(ci[1])
     except Exception:
         ci_low = ci_high = None
+    if log_p_scaling is not None:
+        coef = coef / log_p_scaling.scale
+        if ci_low is not None and ci_high is not None:
+            ci_low = ci_low / log_p_scaling.scale
+            ci_high = ci_high / log_p_scaling.scale
     return ElasticityResult(
         sell_id=sell_id,
         model=model_name,
@@ -104,8 +151,10 @@ def elasticity_from_results(
     )
 
 
-def price_grid_from_logp(df: pd.DataFrame, num: int = 25) -> np.ndarray:
-    prices = np.exp(df[PRICE_LOG_COL])
+def price_grid_from_logp(df: pd.DataFrame, num: int = 25, log_p_scaling: LogPScaling | None = None) -> np.ndarray:
+    scaled_log_p = df[PRICE_LOG_COL].to_numpy(dtype=float)
+    log_p = log_p_scaling.unscale_log_p(scaled_log_p) if log_p_scaling is not None else scaled_log_p
+    prices = np.exp(log_p)
     p_min, p_max = prices.min(), prices.max()
     if p_min <= 0:
         p_min = prices[prices > 0].min()
@@ -113,9 +162,11 @@ def price_grid_from_logp(df: pd.DataFrame, num: int = 25) -> np.ndarray:
 
 
 def build_curve_inputs(
-    base_row: pd.Series, prices: np.ndarray, features: List[str]
+    base_row: pd.Series, prices: np.ndarray, features: List[str], log_p_scaling: LogPScaling | None = None
 ) -> pd.DataFrame:
-    grid = pd.DataFrame({PRICE_LOG_COL: np.log(prices)})
+    log_p = np.log(prices)
+    log_p_feature = log_p_scaling.scale_log_p(log_p) if log_p_scaling is not None else log_p
+    grid = pd.DataFrame({PRICE_LOG_COL: log_p_feature})
     # replicate base values for non-price features
     for feat in features:
         if feat in (PRICE_LOG_COL,):
@@ -129,9 +180,10 @@ def predict_curve(
     features: List[str],
     base_row: pd.Series,
     prices: np.ndarray,
+    log_p_scaling: LogPScaling | None = None,
 ) -> pd.DataFrame:
     clean_feats = [f for f in features if f != "const"]
-    X_grid = build_curve_inputs(base_row, prices, clean_feats)
+    X_grid = build_curve_inputs(base_row, prices, clean_feats, log_p_scaling=log_p_scaling)
     X_grid = sm.add_constant(X_grid, has_constant="add")
     exog_names = list(results.params.index)  # aligns with param vector length/order
     for col in exog_names:
@@ -156,19 +208,26 @@ def run_elasticity(num_price_points: int = 25) -> dict[str, Path]:
     df = load_features_with_ids(metadata)
     df = attach_weather(df)
     feature_sets = get_feature_sets(metadata, df)
+    log_p_scaling = load_log_p_scaling(metadata)
 
     elasticity_rows: List[dict] = []
     curve_rows: List[dict] = []
     for sell_id, group in df.groupby(SELL_ID):
         base_row = group.median(numeric_only=True)
-        price_grid = price_grid_from_logp(group, num=num_price_points)
+        price_grid = price_grid_from_logp(group, num=num_price_points, log_p_scaling=log_p_scaling)
         for model_name, feats in feature_sets.items():
             # drop missing feature columns if not present (e.g., dummy absence)
             present_feats = [f for f in feats if f in group.columns]
             if PRICE_LOG_COL not in present_feats:
                 continue
             results, used_features = fit_ols(group, present_feats)
-            elasticity = elasticity_from_results(int(sell_id), model_name, results, used_features)
+            elasticity = elasticity_from_results(
+                int(sell_id),
+                model_name,
+                results,
+                used_features,
+                log_p_scaling=log_p_scaling,
+            )
             elasticity_rows.append(
                 {
                     "SELL_ID": elasticity.sell_id,
@@ -178,7 +237,7 @@ def run_elasticity(num_price_points: int = 25) -> dict[str, Path]:
                     "ci_high": elasticity.ci_high,
                 }
             )
-            curve = predict_curve(results, used_features, base_row, price_grid)
+            curve = predict_curve(results, used_features, base_row, price_grid, log_p_scaling=log_p_scaling)
             curve["SELL_ID"] = int(sell_id)
             curve["model"] = model_name
             curve_rows.append(curve)
