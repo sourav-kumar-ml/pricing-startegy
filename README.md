@@ -9,9 +9,11 @@ Scripted, notebook-free pricing/elasticity workflow for café SKUs: EDA, feature
 - `reports/` – EDA outputs, correlations/VIFs, baseline metrics/coeffs, plots
 - `src/eda/` – audit, collinearity, plotting
 - `src/processing/` – ingestion + feature pipeline
-- `src/models/` – splits and baseline models
+- `src/models/` – splits, baseline models, elasticity, evaluation
 - `tests/` – unit tests
 - `docs/sprints/` – sprint summaries
+- `docs/` – narrative reports, assumptions
+- `scripts/` – pipeline runner
 - `Plan.md` – project plan
 
 ## Setup
@@ -38,13 +40,19 @@ Scripted, notebook-free pricing/elasticity workflow for café SKUs: EDA, feature
 - **Evaluation & diagnostics (Sprint 5)**  
   Run: `.venv/bin/python -m src.models.eval`  
   Outputs: `reports/eval_metrics.csv`, `reports/eval_residuals.csv`, `reports/eval_rolling_cv.csv`.
+- **End-to-end pipeline (Sprint 6)**  
+  Run: `./scripts/pipeline.sh`  
+  Executes: EDA → transform → splits → baseline → elasticity → evaluation (headless plotting).
 
 ## Tests
 Run from repo root: `pytest` (or `.venv/bin/pytest`)
 
+## CI
+- GitHub Actions workflow (`.github/workflows/ci.yml`) runs pytest on push/PR (uses `ubuntu-latest`, Python 3.11).
+
 ## Status
-- All sprints 1–3 complete; pipelines already executed. Current artifacts are present under `data/processed/`, `configs/`, and `reports/`. Re-run the commands above if you need fresh outputs.
+- All sprints 1–6 complete; artifacts present under `data/processed/`, `configs/`, and `reports/`. Re-run pipelines if you need fresh outputs.
 
 ## Troubleshooting
 - Matplotlib cache warning: set `MPLCONFIGDIR=$PWD/.cache/matplotlib`.
-- Arrow sysctl warnings during Parquet ops in sandbox are harmless.***
+- Arrow sysctl warnings during Parquet ops in sandbox are harmless.
