@@ -79,10 +79,10 @@
 - Goal: make the pipeline easy to rerun and hand off while preserving the log–log modeling approach.
 - Deliverables: CLI/script entry points, refreshed documentation, and optional lightweight CI hooks.
 - Tasks:
-  - [ ] Add simple CLI wrappers (e.g., `scripts/` or `python -m ...`) to run EDA, transforms, splits, and baseline models in sequence.
-  - [ ] Provide usage docs for rerunning the full pipeline and updating recommendations.
-  - [ ] (Optional) Wire pytest into a minimal CI workflow; ensure artifacts are documented/versioned.
-  - [ ] Tests: ensure CLI wrappers execute without errors in dry-run mode.
+  - [x] Add simple CLI wrappers (e.g., `scripts/` or `python -m ...`) to run EDA, transforms, splits, and baseline models in sequence.
+  - [x] Provide usage docs for rerunning the full pipeline and updating recommendations.
+  - [x] (Optional) Wire pytest into a minimal CI workflow; ensure artifacts are documented/versioned.
+  - [x] Tests: ensure CLI wrappers execute without errors in dry-run mode.
 - Definition of Done: runnable end-to-end commands documented, optional CI stubbed, and handover notes prepared.
 
 ## Risks and Mitigations
