@@ -35,6 +35,9 @@ Scripted, notebook-free pricing/elasticity workflow for café SKUs: EDA, feature
 - **Elasticity & price curves (Sprint 4)**  
   Run: `.venv/bin/python -m src.models.elasticity`  
   Outputs: `reports/elasticity.csv`, `reports/price_curves.csv`, `reports/price_recommendations.csv`.
+- **Evaluation & diagnostics (Sprint 5)**  
+  Run: `.venv/bin/python -m src.models.eval`  
+  Outputs: `reports/eval_metrics.csv`, `reports/eval_residuals.csv`, `reports/eval_rolling_cv.csv`.
 
 ## Tests
 Run from repo root: `pytest` (or `.venv/bin/pytest`)

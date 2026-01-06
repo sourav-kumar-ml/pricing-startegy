@@ -69,10 +69,10 @@
 - Goal: validate model quality, quantify uncertainty, and package outputs for stakeholders.
 - Deliverables: validation metrics beyond RMSE (e.g., R², MAPE), residual diagnostics, and a concise report on demand drivers and price sensitivity.
 - Tasks:
-  - [ ] Add evaluation module to compute R², MAPE, and residual plots per SKU; export to `reports/`.
-  - [ ] Perform time-based cross-validation or rolling-origin validation for the log–log models to assess temporal stability.
-  - [ ] Summarize key drivers and elasticity interpretations in a narrative report (`docs/`), keeping the model form consistent with the original description.
-  - [ ] Tests: add checks for metric calculations and that evaluation uses only train/val folds chronologically.
+  - [x] Add evaluation module to compute R², MAPE, and residual diagnostics per SKU; export to `reports/`.
+  - [x] Perform time-based cross-validation or rolling-origin validation for the log–log models to assess temporal stability.
+  - [x] Summarize key drivers and elasticity interpretations in a narrative report (`docs/`), keeping the model form consistent with the original description.
+  - [x] Tests: add checks for metric calculations and that evaluation uses only train/val folds chronologically.
 - Definition of Done: validation artifacts produced, report written, tests passing, sprint summary captured.
 
 ### Sprint 6 – Packaging & Handover (Optional)
