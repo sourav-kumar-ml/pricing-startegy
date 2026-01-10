@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""
+Generate a code-level import map for this repo (internal modules only).
+
+Outputs:
+- docs/IMPORT_MAP.md
+- docs/IMPORT_MAP.dot
+
+This script is intentionally stdlib-only (no repo deps) so it can run in any Python env.
+"""
+
+from __future__ import annotations
+
+import ast
+from dataclasses import dataclass
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DOCS_DIR = REPO_ROOT / "docs"
+
+INTERNAL_PREFIXES = ("src", "tests", "scripts")
+SKIP_DIRS = {".git", ".venv", ".pytest_cache", "__pycache__"}
+
+
+@dataclass(frozen=True)
+class ModuleInfo:
+    name: str
+    path: Path
+
+
+def _is_skipped(path: Path) -> bool:
+    return any(part in SKIP_DIRS for part in path.parts)
+
+
+def path_to_module(path: Path) -> str:
+    rel = path.relative_to(REPO_ROOT)
+    parts = list(rel.parts)
+    parts[-1] = parts[-1][:-3]  # strip .py
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts)
+
+
+def iter_python_modules() -> list[ModuleInfo]:
+    modules: list[ModuleInfo] = []
+    for path in REPO_ROOT.rglob("*.py"):
+        if _is_skipped(path):
+            continue
+        mod = path_to_module(path)
+        if not mod.startswith(INTERNAL_PREFIXES):
+            continue
+        modules.append(ModuleInfo(name=mod, path=path))
+    # Sort deterministically.
+    return sorted(modules, key=lambda m: m.name)
+
+
+def resolve_relative_import(current_module: str, module: str | None, level: int) -> str | None:
+    """
+    Resolve `from .foo import bar` against the current module.
+
+    - For a module `src.utils.io`, the "package context" is `src.utils`.
+    - For a package module `src.utils` (i.e. src/utils/__init__.py), the context is `src.utils`.
+    """
+
+    if level <= 0:
+        return module
+
+    current_parts = current_module.split(".")
+
+    # If current_module is a package (no trailing submodule), treat it as the package context.
+    # Otherwise, drop the last component to get the containing package.
+    package_parts = current_parts
+    if (REPO_ROOT / Path(*current_parts) / "__init__.py").exists() is False:
+        if len(current_parts) > 1:
+            package_parts = current_parts[:-1]
+
+    # level=1 means "current package", level=2 means parent of current package, etc.
+    up = level - 1
+    if up > 0:
+        if up >= len(package_parts):
+            base_parts: list[str] = []
+        else:
+            base_parts = package_parts[: -up]
+    else:
+        base_parts = package_parts
+
+    if module:
+        return ".".join(base_parts + module.split("."))
+    return ".".join(base_parts)
+
+
+def parse_internal_imports(modules: list[ModuleInfo]) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    """
+    Returns:
+    - direct_imports: module -> {internal modules imported}
+    - reverse_imports: module -> {modules that import it}
+    """
+
+    all_names = {m.name for m in modules}
+    direct: dict[str, set[str]] = {m.name: set() for m in modules}
+
+    for m in modules:
+        try:
+            tree = ast.parse(m.path.read_text(), filename=str(m.path))
+        except SyntaxError:
+            continue
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    name = alias.name
+                    if name.startswith(INTERNAL_PREFIXES):
+                        direct[m.name].add(name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module is None and node.level == 0:
+                    continue
+                name = node.module or ""
+                if node.level:
+                    resolved = resolve_relative_import(m.name, name, node.level)
+                    if resolved:
+                        name = resolved
+                if name.startswith(INTERNAL_PREFIXES):
+                    direct[m.name].add(name)
+
+    # Normalize: map imports to the closest module name we actually have.
+    normalized: dict[str, set[str]] = {m: set() for m in direct}
+    for mod, deps in direct.items():
+        for dep in deps:
+            if dep == mod:
+                continue
+            if dep in all_names:
+                normalized[mod].add(dep)
+                continue
+            parts = dep.split(".")
+            while parts:
+                candidate = ".".join(parts)
+                if candidate in all_names:
+                    normalized[mod].add(candidate)
+                    break
+                parts = parts[:-1]
+
+    reverse: dict[str, set[str]] = {m.name: set() for m in modules}
+    for mod, deps in normalized.items():
+        for dep in deps:
+            reverse.setdefault(dep, set()).add(mod)
+    return normalized, reverse
+
+
+def render_markdown(modules: list[ModuleInfo], direct: dict[str, set[str]], reverse: dict[str, set[str]]) -> str:
+    lines: list[str] = []
+    lines.append("# Import Map (Internal Modules)")
+    lines.append("")
+    lines.append("Auto-generated by `scripts/gen_import_map.py`.")
+    lines.append("")
+    lines.append("Notes:")
+    lines.append("- This is the **code-level** import graph (who imports whom).")
+    lines.append("- It intentionally focuses on internal modules (`src.*`, `tests.*`, `scripts.*`).")
+    lines.append("- The pipeline’s most important coupling is via **on-disk artifacts**; see `docs/PROJECT_TRACE.md`.")
+    lines.append("")
+
+    lines.append("## Direct Imports (Adjacency List)")
+    lines.append("")
+    for m in sorted(direct):
+        lines.append(f"- `{m}`")
+        deps = sorted(direct[m])
+        if deps:
+            for dep in deps:
+                lines.append(f"  - `{dep}`")
+        else:
+            lines.append("  - (none)")
+    lines.append("")
+
+    lines.append("## Reverse Imports (Imported By)")
+    lines.append("")
+    for m in sorted(reverse):
+        lines.append(f"- `{m}`")
+        users = sorted(reverse[m])
+        if users:
+            for u in users:
+                lines.append(f"  - `{u}`")
+        else:
+            lines.append("  - (none)")
+    lines.append("")
+
+    lines.append("## Module → File")
+    lines.append("")
+    for m in modules:
+        rel = m.path.relative_to(REPO_ROOT)
+        lines.append(f"- `{m.name}` → `{rel}`")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_dot(direct: dict[str, set[str]]) -> str:
+    lines: list[str] = []
+    lines.append("digraph import_graph {")
+    lines.append('  rankdir="LR";')
+    lines.append("  node [shape=box];")
+    for src in sorted(direct):
+        for dst in sorted(direct[src]):
+            lines.append(f'  "{src}" -> "{dst}";')
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def main() -> int:
+    modules = iter_python_modules()
+    direct, reverse = parse_internal_imports(modules)
+
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    (DOCS_DIR / "IMPORT_MAP.md").write_text(render_markdown(modules, direct, reverse))
+    (DOCS_DIR / "IMPORT_MAP.dot").write_text(render_dot(direct))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

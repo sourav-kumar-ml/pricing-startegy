@@ -12,6 +12,7 @@ This repository turns raw daily transactions into **per-SKU demand models** and 
 - Estimates own-price elasticity from log–log regressions and generates **price/quantity/revenue curves** over the **observed** price range.
 
 If you want the narrative summary (interpretation + limitations), start with `docs/report.md` and `docs/assumptions.md`.
+If you want a code-level, module-by-module trace, start with `docs/PROJECT_TRACE.md` and `docs/IMPORT_MAP.md`.
 
 ## Goal & Scope
 **Goal:** quantify how demand responds to price for each SKU (`SELL_ID`) and generate actionable, bounded pricing guidance that is easy to reproduce and audit.

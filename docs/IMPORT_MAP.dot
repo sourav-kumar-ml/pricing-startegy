@@ -1,0 +1,27 @@
+digraph import_graph {
+  rankdir="LR";
+  node [shape=box];
+  "src.eda.audit" -> "src.utils.io";
+  "src.eda.audit" -> "src.utils.paths";
+  "src.eda.audit" -> "src.utils.reporting";
+  "src.eda.collinearity" -> "src.utils.io";
+  "src.eda.collinearity" -> "src.utils.paths";
+  "src.eda.run_eda" -> "src.eda.audit";
+  "src.eda.run_eda" -> "src.eda.collinearity";
+  "src.eda.run_eda" -> "src.utils.paths";
+  "src.models.baseline" -> "src.utils.paths";
+  "src.models.elasticity" -> "src.utils.io";
+  "src.models.elasticity" -> "src.utils.paths";
+  "src.models.eval" -> "src.utils.paths";
+  "src.models.splits" -> "src.utils.paths";
+  "src.processing.pipeline" -> "src.utils.io";
+  "src.processing.pipeline" -> "src.utils.paths";
+  "src.utils.io" -> "src.utils.paths";
+  "tests.test_audit" -> "src.eda.audit";
+  "tests.test_baseline" -> "src.models.baseline";
+  "tests.test_collinearity" -> "src.eda.collinearity";
+  "tests.test_elasticity" -> "src.models.elasticity";
+  "tests.test_eval" -> "src.models.eval";
+  "tests.test_pipeline" -> "src.processing.pipeline";
+  "tests.test_splits" -> "src.models.splits";
+}
